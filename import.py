@@ -1,7 +1,27 @@
 import sys
 from collections import namedtuple
 
-Neurite = namedtuple('Neurite', ['id', 'type', 'x', 'y', 'z', 'r', 'parent'])
+class Neurite(namedtuple('Neurite', ('id', 'type', 'x', 'y', 'z', 'r', 'parent', 'children'))):
+
+    @property
+    def position(self):
+        return (self.x, self.y, self.z)
+
+    @property
+    def type_string(self):
+        types = {
+            0: 'undefined',
+            1: 'soma',
+            2: 'axon',
+            3: 'dendrite',
+            4: 'apical dendrite',
+        }
+
+        return types.get(self.type, 'custom')
+
+    def __repr__(self):
+        # A custom __repr__ so that we dont get infinete recursion because of both parent and children
+        return 'Neurite(id={id}, type={type}, x={x}, y={y}, z={z}, children={children})'.format(**self._asdict())
 
 def main(filename):
     items = {}
@@ -13,18 +33,22 @@ def main(filename):
             line = line.split()
 
             n = Neurite(
-                int(line[0]),
-                int(line[1]),
-                float(line[2]),
-                float(line[3]),
-                float(line[4]),
-                float(line[5]),
-                items.get(int(line[6]), None)
+                id=int(line[0]),
+                type=int(line[1]),
+                x=float(line[2]),
+                y=float(line[3]),
+                z=float(line[4]),
+                r=float(line[5]),
+                parent=items.get(int(line[6]), None),
+                children=[]
             )
+
+            if n.parent:
+                n.parent.children.append(n)
 
             items[n.id] = n
 
-    return items
+    return items[1]
 
 
 if __name__ == '__main__':
