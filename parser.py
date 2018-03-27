@@ -1,7 +1,8 @@
-import sys
+import sys, os, os.path
+from itertools import chain
 from collections import namedtuple
 
-import kdtree
+from kd import DataPoint, Orthotope, KdTree, find_nearest
 
 class Neurite(namedtuple('Neurite', ('id', 'type', 'x', 'y', 'z', 'r', 'parent', 'children'))):
     @property
@@ -25,23 +26,16 @@ class Neurite(namedtuple('Neurite', ('id', 'type', 'x', 'y', 'z', 'r', 'parent',
         # A custom __repr__ so that we dont get infinete recursion because of both parent and children
         return 'Neurite(id={id}, type={type}, x={x}, y={y}, z={z}, children={children})'.format(**self._asdict())
 
-class Item(object):
-    def __init__(self, x, y, z, data):
-        self.coords = (x, y, z)
-        self.data = data
-
-    def __len__(self):
-        return len(self.coords)
-
-    def __getitem__(self, i):
-        return self.coords[i]
-
-    def __repr__(self):
-        return 'Item(({}), {})'.format(self.coords, self.data)
+    #__iter__ from https://stackoverflow.com/questions/6914803/python-iterator-through-tree-with-list-of-children
+    # user wberry 2018-03-25
+    def __iter__(self):
+        "implement the iterator protocol"
+        for v in chain(*map(iter, self.children)):
+          yield v
+        yield self
 
 def parse(filename):
     items = {}
-    tree = kdtree.create(dimensions=3)
     with open(filename, 'r') as f:
         for line in f:
             if line.startswith('#'):
@@ -65,43 +59,54 @@ def parse(filename):
 
             items[n.id] = n
 
-            tree.add(Item(*n.coords, n))
+    return items[1]
 
-    tree = tree.rebalance()
-    return items[1], tree
+def parse_files(files):
+    neurons = []
+    for file in files:
+        if file.endswith('.swc'):
+            neurons.append(parse(file))
+        elif os.path.isdir(file):
+            neurons.extend(parse_files([os.path.join(file, filename) for filename in os.listdir(file)]))
 
+    return neurons
+
+def create_tree(neuron):
+    neurites = list(neuron)
+
+    minP = list(map(min, map(lambda n: n.coords, zip(*neurites))))
+    maxP = list(map(max, map(lambda n: n.coords, zip(*neurites))))
+
+    return KdTree(neurites, Orthotope(minP, maxP))
 
 if __name__ == '__main__':
-    neurons = []
-    trees = []
-    for filename in sys.argv[1:]:
-        n, tree = parse(filename)
-
-        neurons.append(n)
-        trees.append(tree)
-
-    print('files parsed')
+    neurons = parse_files(sys.argv[1:])[:2]
+    print(len(neurons), 'files parsed')
+    trees = [create_tree(neuron) for neuron in neurons]
+    print(len(trees), 'trees created')
 
     closest_points = []
-    for i, tree in enumerate(trees):
-        print('searching tree', i)
-        for point in tree.inorder():
-            closest_distance = 1e6
+    for i, neuron in enumerate(neurons):
+        print('searching around', len(list(neuron)), 'points in tree', i)
+        for neurite in neuron:
+            #print('searching around point', point)
+
+            closest_distance = float('inf')
             closest_point = None
 
             # Iterate through trees since we have separate kd-trees per neuron
-            for j, inner_tree in enumerate(trees):
+            for j, tree in enumerate(trees):
                 # Dont search yourself
-                if i == j:
-                    continue
+                if i == j: continue
+                #print('searching opposing tree', j)
 
-                found_point, distance = inner_tree.search_nn(point.data.coords)
+                n = find_nearest(1, tree, neurite.coords)
 
-                if distance < closest_distance:
-                    closest_distance = distance
-                    closest_point = found_point
+                if n.dist_sqd < closest_distance:
+                    closest_distance = n.dist_sqd
+                    closest_point = n.nearest
 
             closest_points.append((point, closest_point, closest_distance))
 
 
-    print([x[2] for x in filter(lambda x: x[2] < 100, closest_points)])
+    print([x[2] for x in filter(lambda x: x[2] < 10, closest_points)])

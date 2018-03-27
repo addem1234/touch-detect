@@ -1,30 +1,30 @@
 import sys
+from random import choice
 
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+import matplotlib.colors
 import numpy as np
 
-from parser import parse
+from parser import parse_files
 
-def plot(xs, ys, zs, rs):
+def plot(trees):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
-    ax.scatter(xs, ys, zs, s=rs)
+    for x, y, z, r, c in trees:
+        ax.scatter(x, y, z, s=r, c=c)
 
-    plt.show()
+    plt.tight_layout()
+    plt.savefig('plot.png', bbox_inches='tight', dpi=500)
+    #plt.show()
 
 if __name__ == '__main__':
-    xs, ys, zs, rs = [], [], [], []
-    for filename in sys.argv[1:]:
-        n, tree = parse(filename)
+    trees = []
+    for neuron in parse_files(sys.argv[1:]):
+        x, y, z, r = zip(*[ (*n.coords, n.r) for n in neuron ])
+        color = choice(list(matplotlib.colors.CSS4_COLORS.keys()))
+        trees.append((x, y, z, r, color))
 
-        x, y, z, r = zip(*[ (*n.data.coords, n.data.data.r) for n in tree.inorder() ])
-
-        xs.extend(x)
-        ys.extend(y)
-        zs.extend(z)
-        rs.extend(r)
-
-    print(len(xs), len(ys), len(zs), len(rs))
-    plot(xs, ys, zs, rs)
+    print('plotting', len(trees), 'trees')
+    plot(trees)
