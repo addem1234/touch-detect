@@ -116,21 +116,6 @@ def show_nearest(k, heading, kd, p):
     print("Nodes visited:   ", n.nodes_visited, "\n")
 
 
-class DataPoint(object):
-    def __init__(self, data, *coords):
-        self.coords = coords
-        self.data = data
-
-    def __len__(self):
-        return len(self.coords)
-
-    def __getitem__(self, i):
-        return self.coords[i]
-
-    def __repr__(self):
-        return 'DataPoint(({}), {})'.format(self.coords, self.data)
-
-
 if __name__ == "__main__":
 
     P = lambda *coords: list(coords)
