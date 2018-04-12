@@ -47,11 +47,14 @@ class Neurite(object):
     def __getitem__(self, i):
         return self.coords[i]
 
+    def __iter__(self):
+        for i in range(len(self.coords)):
+            yield self.coords[i]
+
     #__iter__ from https://stackoverflow.com/questions/6914803/python-iterator-through-tree-with-list-of-children
     # user wberry 2018-03-25
-    def __iter__(self):
-        "implement the iterator protocol"
-        for v in chain(*map(iter, self.children)):
+    def neurites(self):
+        for v in chain(*map(Neurite.neurites, self.children)):
           yield v
         yield self
 
@@ -93,45 +96,12 @@ def parse_files(files):
 
     return neurons
 
-def create_tree(neuron):
-    neurites = list(neuron)
+def create_tree(neurites):
 
-    minP = list(map(min, zip(*map(lambda n: n.coords, neurites))))
-    maxP = list(map(max, zip(*map(lambda n: n.coords, neurites))))
+    minP = list(map(min, zip(*neurites)))
+    maxP = list(map(max, zip(*neurites)))
 
     return KdTree(neurites, Orthotope(minP, maxP))
 
 def create_big_tree(neurons):
-    return create_tree(list(chain(*neurons)))
-
-if __name__ == '__main__':
-    neurons = parse_files(sys.argv[1:])
-    print(len(neurons), 'files parsed')
-    trees = [create_tree(neuron) for neuron in neurons]
-    print(len(trees), 'trees created')
-
-    closest_points = []
-    for i, neuron in enumerate(neurons):
-        print('searching around', len(list(neuron)), 'points in tree', i)
-        for neurite in neuron:
-            #print('searching around point', point)
-
-            closest_distance = float('inf')
-            closest_point = None
-
-            # Iterate through trees since we have separate kd-trees per neuron
-            for j, tree in enumerate(trees):
-                # Dont search yourself
-                if i == j: continue
-                #print('searching opposing tree', j)
-
-                n = find_nearest(1, tree, neurite.coords)
-
-                if n.dist_sqd < closest_distance:
-                    closest_distance = n.dist_sqd
-                    closest_point = n.nearest
-
-            closest_points.append((point, closest_point, closest_distance))
-
-
-    print([x[2] for x in filter(lambda x: x[2] < 10, closest_points)])
+    return create_tree(list(chain(*map(Neurite.neurites, neurons))))
