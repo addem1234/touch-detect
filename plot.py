@@ -28,3 +28,8 @@ if __name__ == '__main__':
 
     print('plotting', len(trees), 'trees')
     plot(trees)
+
+
+###
+### https://plot.ly/python/3d-network-graph/
+###

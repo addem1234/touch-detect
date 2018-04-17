@@ -1,18 +1,16 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
-
+colorlover = "*"
+color = "*"
+colour = "*"
+python-igraph = "*"
+plotly = "*"
 
 [dev-packages]
 
-
-
 [requires]
-
 python_version = "3.6"
