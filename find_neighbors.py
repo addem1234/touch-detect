@@ -1,9 +1,10 @@
 import sys
+from collections import defaultdict
 from copy import deepcopy
-from kd import sqd, find_nearest
+from kd import sqd, find_nearest, T3
 from parser import parse_files, create_big_tree, create_tree
 
-THRESHOLD = 100
+THRESHOLD = 5
 
 def has_neighbors(node, name):
     if not node:
@@ -32,7 +33,7 @@ def something(kd, hr):
     if not kd:
         return res
 
-    if sqd(hr.min, hr.max) < THRESHOLD and has_neighbors(kd, kd.dom_elt.filename):
+    if sqd(hr.min, hr.max) < THRESHOLD**2 and has_neighbors(kd, kd.dom_elt.filename):
         res = [(sqd(hr.min, hr.max), kd)]
 
     left_hr, right_hr = child_bounds(kd, hr)
@@ -50,41 +51,54 @@ def quick(node):
         distance_squared = sqd(
             node.left.dom_elt.coords,
             node.right.dom_elt.coords)
-        if distance_squared < THRESHOLD:
+        if distance_squared < THRESHOLD**2:
             return [(distance_squared, node)]
 
     return quick(node.left) + quick(node.right)
 
 def naive(neurons, trees):
-    neighbors = []
+    neighbors = defaultdict(dict)
+    ni = len(neurons)
+    nj = len(trees)
     for i, neuron in enumerate(neurons):
-        print('searching around', len(list(neuron.neurites())), 'points in tree', i)
+        nk = len(list(neuron.neurites()))
+        # print('searching around', nk, 'points in tree', i)
         # Iterate through every point in the neuron
-        for neurite in neuron.neurites():
-            #print('searching around point', neurite)
+        # If this could be binary searched somehow?
+        points_searched = 0
+        for k, neurite in enumerate(neuron.neurites()):
 
-            closest_distance = float('inf')
-            closest_point = None
+            if neurite in neighbors:
+                continue
+
+            min_sqd = float('inf') # closest distance squared
+            closest_neurite = None
 
             # Iterate through trees since we have separate kd-trees per neuron
             for j, tree in enumerate(trees):
                 # Dont search yourself
                 if i == j: continue
-                #print('searching opposing tree', j)
+
+                print('\rtree: {}/{}, point: {}/{}, opposing tree: {}/{}'.format(i + 1, ni, k + 1, nk, j + 1, nj), end='')
 
                 n = find_nearest(1, tree, neurite)
 
-                if n.dist_sqd < closest_distance:
-                    closest_distance = n.dist_sqd
-                    closest_point = n.nearest
+                if n.dist_sqd < min_sqd:
+                    min_sqd = n.dist_sqd
+                    closest_neurite = n.nearest
 
-                if closest_distance < THRESHOLD:
-                    break
+            if not (closest_neurite) in neighbors and min_sqd < THRESHOLD**2:
+                neighbors[neurite] = (closest_neurite, min_sqd)
+                neighbors[closest_neurite] = (neurite, min_sqd)
 
-            neighbors.append((neurite, closest_point, closest_distance))
+            points_searched += 1
 
+        print() # to add an end to the self replacing line @83 aka print('\r...', end='')
+        print('searched', points_searched, 'points in tree', i)
 
-    return list(map(lambda x: x[:2], filter(lambda x: x[2] < THRESHOLD, neighbors)))
+    # n2[0] is a neuron, n2[1] is distance, see line 93 aka neighbors[closest_neurite] = (neurite, min_sqd)
+    # hash magic to deduplicate list, result is list of type [(n1, n2, d)]
+    return {(hash(n1) + hash(n2[0])): (n1, n2[0], n2[1]) for n1, n2 in neighbors.items() }.values()
 
 def aslist(kd):
     if not kd:
@@ -102,21 +116,29 @@ if __name__ == '__main__':
     neurons = parse_files(sys.argv[1:])
     print(len(neurons), 'files parsed')
 
-    tree = create_big_tree(neurons)
-    print('big tree created')
-    results = quick(tree.n)
-    print(len(results), 'probable neighbors found')
-    resultnodelists = [aslist(r[1]) for r in results]
-    resultnames = [getname(x[1]) for x in results]
+    # tree = create_big_tree(neurons)
+    # print('big tree created')
+    # results = quick(tree.n)
+    # print(len(results), 'probable neighbors found')
+    # resultnodelists = [aslist(r[1]) for r in results]
+    # resultnames = [getname(x[1]) for x in results]
 
-    things = something(tree.n, tree.bounds)
-    print(len(things), 'things found')
-    thingnodelists = [aslist(r[1]) for r in things]
-    thingnames = [getname(x[1]) for x in things]
+    # things = something(tree.n, tree.bounds)
+    # print(len(things), 'things found')
+    # thingnodelists = [aslist(r[1]) for r in things]
+    # thingnames = [getname(x[1]) for x in things]
 
     trees = [create_tree(list(neuron.neurites())) for neuron in neurons]
     print(len(trees), 'small trees created')
     naiveresults = naive(neurons, trees)
     print(len(naiveresults), 'actual neighbors found')
-    print(naiveresults)
+    for n1, n2, d in sorted(naiveresults, key=lambda n: (n[0].idname, n[0].id)):
+        print(
+            n1.idname, n2.idname,
+            n1.id, n2.id,
+            d,
+            n1.x, n2.x,
+            n1.y, n2.y,
+            n1.z, n2.z,
+            sep='\t')
 

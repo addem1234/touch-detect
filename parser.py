@@ -5,10 +5,11 @@ from collections import namedtuple
 from kd import Orthotope, KdTree, find_nearest
 
 class Neurite(object):
-    __slots__ = ('id', 'type', 'x', 'y', 'z', 'r', 'parent', 'children', 'filename')
+    __slots__ = ('id', 'type', 'x', 'y', 'z', 'r', 'parent', 'children', 'filename', 'idname')
 
     def __init__(self, id, type, x, y, z, r, parent, children, filename):
         self.id = id
+        self.idname = filename.split('/')[-1].split('.')[0]
         self.type = type
         self.x = x
         self.y = y
@@ -39,6 +40,7 @@ class Neurite(object):
         #return 'Neurite(id={id})'.format(**self._asdict())
         # A custom __repr__ so that we dont get infinete recursion because of both parent and children
         slots = {k: self.__getattribute__(k) for k in self.__slots__}
+        slots['type'] = self.type_string
         return 'Neurite(id={id}, type={type}, x={x}, y={y}, z={z}, filename={filename})'.format(**slots)
 
     def __len__(self):
