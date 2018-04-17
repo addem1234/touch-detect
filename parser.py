@@ -1,5 +1,6 @@
-import sys, os, os.path
+import sys, os, os.path, math
 from itertools import chain
+import numpy as np
 
 class Neurite(object):
     __slots__ = ('id', 'type', 'x', 'y', 'z', 'r', 'parent', 'children', 'filename')
@@ -52,12 +53,12 @@ class Neurite(object):
     #__iter__ from https://stackoverflow.com/questions/6914803/python-iterator-through-tree-with-list-of-children
     # user wberry 2018-03-25
     def neurites(self):
+        yield self
         for v in chain(*map(Neurite.neurites, self.children)):
           yield v
-        yield self
 
-    def apply_transform(transform):
-        self.x, self.y, self.z = transform(self.x, self.y, self.z)
+    def apply_transform(axis, theta):
+        self.x, self.y, self.z = np.dot(rotation_matrix(axis, theta), self.coords)
         for child in self.children:
             child.apply_transform(transform)
 
@@ -98,3 +99,22 @@ def parse_files(files):
             neurons.extend(parse_files([os.path.join(file, filename) for filename in os.listdir(file)]))
 
     return neurons
+
+
+def rotation_matrix(axis, theta):
+    """
+    Source: https://stackoverflow.com/questions/6802577/rotation-of-3d-vector?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
+    Author: unutbu
+    Return the rotation matrix associated with counterclockwise rotation about
+    the given axis by theta radians.
+    """
+    axis = np.asarray(axis)
+    axis = axis/math.sqrt(np.dot(axis, axis))
+    a = math.cos(theta/2.0)
+    b, c, d = -axis*math.sin(theta/2.0)
+    aa, bb, cc, dd = a*a, b*b, c*c, d*d
+    bc, ad, ac, ab, bd, cd = b*c, a*d, a*c, a*b, b*d, c*d
+    return np.array([[aa+bb-cc-dd, 2*(bc+ad), 2*(bd-ac)],
+                     [2*(bc-ad), aa+cc-bb-dd, 2*(cd+ab)],
+                     [2*(bd+ac), 2*(cd-ab), aa+dd-bb-cc]])
+
