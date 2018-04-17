@@ -1,5 +1,4 @@
 import sys
-import igraph as ig
 
 import plotly.plotly as py
 import plotly.offline

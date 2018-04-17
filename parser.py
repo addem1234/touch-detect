@@ -1,15 +1,11 @@
 import sys, os, os.path
 from itertools import chain
-from collections import namedtuple
-
-from kd import Orthotope, KdTree, find_nearest
 
 class Neurite(object):
-    __slots__ = ('id', 'type', 'x', 'y', 'z', 'r', 'parent', 'children', 'filename', 'idname')
+    __slots__ = ('id', 'type', 'x', 'y', 'z', 'r', 'parent', 'children', 'filename')
 
     def __init__(self, id, type, x, y, z, r, parent, children, filename):
         self.id = id
-        self.idname = filename.split('/')[-1].split('.')[0]
         self.type = type
         self.x = x
         self.y = y
@@ -60,6 +56,11 @@ class Neurite(object):
           yield v
         yield self
 
+    def apply_transform(transform):
+        self.x, self.y, self.z = transform(self.x, self.y, self.z)
+        for child in self.children:
+            child.apply_transform(transform)
+
 def parse(filename):
     items = {}
     with open(filename, 'r') as f:
@@ -97,13 +98,3 @@ def parse_files(files):
             neurons.extend(parse_files([os.path.join(file, filename) for filename in os.listdir(file)]))
 
     return neurons
-
-def create_tree(neurites):
-
-    minP = list(map(min, zip(*neurites)))
-    maxP = list(map(max, zip(*neurites)))
-
-    return KdTree(neurites, Orthotope(minP, maxP))
-
-def create_big_tree(neurons):
-    return create_tree(list(chain(*map(Neurite.neurites, neurons))))

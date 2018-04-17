@@ -4,11 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-colorlover = "*"
-color = "*"
-colour = "*"
-python-igraph = "*"
 plotly = "*"
+scipy = "*"
 
 [dev-packages]
 
