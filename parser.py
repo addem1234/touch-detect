@@ -22,7 +22,7 @@ class Neurite(object):
 
 
     @property
-    def type_string(self):
+    def type_s(self):
         types = {
             0: 'undefined',
             1: 'soma',
@@ -37,7 +37,7 @@ class Neurite(object):
         #return 'Neurite(id={id})'.format(**self._asdict())
         # A custom __repr__ so that we dont get infinete recursion because of both parent and children
         slots = {k: self.__getattribute__(k) for k in self.__slots__}
-        slots['type'] = self.type_string
+        slots['type'] = self.type_s
         return 'Neurite(id={id}, type={type}, x={x}, y={y}, z={z}, filename={filename})'.format(**slots)
 
     def __len__(self):
@@ -57,10 +57,20 @@ class Neurite(object):
         for v in chain(*map(Neurite.neurites, self.children)):
           yield v
 
-    def apply_transform(axis, theta):
+    def rotate(axis, theta):
         self.x, self.y, self.z = np.dot(rotation_matrix(axis, theta), self.coords)
+
         for child in self.children:
-            child.apply_transform(transform)
+            child.rotate(transform)
+
+    def translate(x, y, z):
+        self.x += x
+        self.y += y
+        self.z += z
+
+        for child in self.children:
+            child.translate(x, y, z)
+
 
 def parse(filename):
     items = {}

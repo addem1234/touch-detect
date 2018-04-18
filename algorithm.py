@@ -1,4 +1,5 @@
 import sys
+from itertools import chain
 from parser import parse_files
 
 from scipy.spatial import cKDTree
@@ -8,6 +9,11 @@ DEFAULT_RADIUS = 5
 def create_cKDTree(neurites):
     return cKDTree(neurites, copy_data=True)
 
+def create_bin_cKDTree(neurons):
+    data = list(chain(*neurons))
+    return data, cKDTree(data, copy_data=True)
+
+# this uses separate trees and finds neighbors for each pair
 def find_neighbors(neurons, radius=DEFAULT_RADIUS):
     # create a list of kd-trees
     trees = [ create_cKDTree(neurites) for neurites in neurons ]
@@ -46,6 +52,31 @@ def find_neighbors(neurons, radius=DEFAULT_RADIUS):
 
     return valid_pairs
 
+# this one should be quicker as it creates one big tree
+# might get stack overflow issues with a lot of data?
+def find_neighbors(neurons, radius=DEFAULT_RADIUS):
+    data, tree = create_bin_cKDTree(neurons)
+
+    res = tree.query_pairs(radius)
+
+    valid_pairs = set()
+    for source, neighbors in zip(data, res):
+        for target in [ data[k] for k in neighbors]:
+            # we need to filter out neighbors that belong to the same neuron
+            if source.filename == target.filename:
+                continue
+
+            if source.type_s == 'axon' and target.type_s == 'dendrite':
+                valid_pairs.add((source, target))
+            elif source.type_s == 'dendrite' and target.type_s == 'axon':
+
+                # doing this one backwards might make it
+                # easier to recreate a directed graph in the future
+                # maybe it should be the other way around, though?
+                # does things go from axon to dendrite or dendrite to axon?
+                valid_pairs.add((target, source))
+
+    return valid_pairs
 
 if __name__ == '__main__':
     neurons = [ list(n.neurites()) for n in parse_files(sys.argv[1:]) ]
