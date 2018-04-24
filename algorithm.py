@@ -15,7 +15,7 @@ def create_big_cKDTree(neurons):
     return data, cKDTree(data, copy_data=True)
 
 # this uses separate trees and finds neighbors for each pair
-def find_neighbors_alternate(neurons, radius=DEFAULT_RADIUS):
+def find_neighbors_balls(neurons, radius=DEFAULT_RADIUS):
     # create a list of kd-trees
     tbefore = time()
     trees = [ create_cKDTree(neurites) for neurites in neurons ]
@@ -83,6 +83,45 @@ def find_neighbors(neurons, radius=DEFAULT_RADIUS):
     res = tree.query_pairs(radius)
     tafter = time()
     print('query_pairs time', tafter-tbefore)
+
+    tbefore = time()
+    valid_pairs = set()
+    for source, neighbors in zip(data, res):
+        for target in [ data[k] for k in neighbors]:
+            # we need to filter out neighbors that belong to the same neuron
+            if source.filename == target.filename:
+                continue
+
+            if source.type_s == 'axon' and target.type_s == 'dendrite':
+                valid_pairs.add((source, target))
+            elif source.type_s == 'dendrite' and target.type_s == 'axon':
+
+                # doing this one backwards might make it
+                # easier to recreate a directed graph in the future
+                # maybe it should be the other way around, though?
+                # does things go from axon to dendrite or dendrite to axon?
+                valid_pairs.add((target, source))
+            elif source.type_s == 'soma' and target.type_s == 'axon':
+                valid_pairs.add((target, source))
+
+    tafter = time()
+    print('filtering time', tafter-tbefore)
+
+    return valid_pairs
+
+# this one should be quicker as it creates one big tree
+# might get stack overflow issues with a lot of data
+def find_neighbors_all_balls(neurons, radius=DEFAULT_RADIUS):
+    tbefore = time()
+    data, tree = create_big_cKDTree(neurons)
+    tafter = time()
+    print('tree construction time', tafter-tbefore)
+    print(sum([len(n) for n in neurons]), 'points in total')
+
+    tbefore = time()
+    res = tree.query_ball_tree(tree, radius)
+    tafter = time()
+    print('query_ball_tree time', tafter-tbefore)
 
     tbefore = time()
     valid_pairs = set()

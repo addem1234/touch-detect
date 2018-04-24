@@ -3,7 +3,7 @@ import numpy as np
 from math import pi, cos, sin, sqrt
 from random import seed, random, sample, choice
 from parser import parse_files
-from algorithm import find_neighbors, find_neighbors_alternate
+from algorithm import find_neighbors, find_neighbors_balls, find_neighbors_all_balls
 
 msn_d1 = [list(n.neurites()) for n in parse_files(['neurons/msn_d1-20170919-reg5'])]
 print(len(msn_d1), 'files parsed from msn_d1')
@@ -84,26 +84,30 @@ if __name__ == '__main__':
     # run_benchmark(1, 400, 1, find_neighbors)
     # run_benchmark(1, 800, 1, find_neighbors)
 
-    # out of memory
-    # run_benchmark(1, 1600, 1, find_neighbors)
+    # memory error
+    # run_benchmark(1, 1600, 1, find_neighbors_all_balls)
     # run_benchmark(1, 3200, 1, find_neighbors)
 
     # works ok
     # run_benchmark(1, 100, 1, find_neighbors)
     # run_benchmark(2, 100, 1, find_neighbors)
 
-    # out of memory
+    # memory error
     # run_benchmark(4, 100, 1, find_neighbors)
     # run_benchmark(8, 100, 1, find_neighbors)
     # run_benchmark(16, 100, 1, find_neighbors)
     # run_benchmark(32, 100, 1, find_neighbors)
 
-    run_benchmark(1, 100, .5, find_neighbors)
-    run_benchmark(1, 100, 1, find_neighbors)
-    run_benchmark(1, 100, 2, find_neighbors)
-    run_benchmark(1, 100, 3, find_neighbors)
-    run_benchmark(1, 100, 4, find_neighbors)
-    run_benchmark(1, 100, 5, find_neighbors)
+    run_benchmark(1, 250, .5, find_neighbors)
+    run_benchmark(1, 250, 1, find_neighbors)
+    run_benchmark(1, 250, 2, find_neighbors)
+    run_benchmark(1, 250, 3, find_neighbors)
+    run_benchmark(1, 250, 4, find_neighbors)
+    run_benchmark(1, 250, 5, find_neighbors)
 
     # way too slow
     # run_benchmark(1, 200, 5, find_neighbors_alternate)
+
+    # run_benchmark(1, 100, 1/2, find_neighbors)
+    # run_benchmark(1, 100, 1, find_neighbors_all_balls)
+    # run_benchmark(1, 100, 1, find_neighbors_balls)
