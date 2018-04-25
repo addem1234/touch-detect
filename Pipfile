@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 plotly = "*"
 scipy = "*"
+memory-profiler = "*"
 
 [dev-packages]
 

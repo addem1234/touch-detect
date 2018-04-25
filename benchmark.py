@@ -3,6 +3,7 @@ import numpy as np
 from uuid import uuid4
 from math import pi, cos, sin, sqrt
 from random import seed, random, sample, choice
+from memory_profiler import memory_usage
 from parser import parse_files
 from algorithm import find_neighbors, find_neighbors_all_balls
 
@@ -48,20 +49,20 @@ def run_benchmark(size, density, radius, algorithm):
 
     # 47% of neurons in size
     neurons.extend(big_sample(msn_d1, 0.475*density*size**3))
-    print('msn_d1 neurons added', len(neurons), 'total')
+    # print('msn_d1 neurons added', len(neurons), 'total')
 
     # 47% of neurons in size
     neurons.extend(big_sample(msn_d2, 0.475*density*size**3))
-    print('msn_d2 neurons added', len(neurons), 'total')
+    # print('msn_d2 neurons added', len(neurons), 'total')
 
     # 1% of neurons in size
     neurons.extend(big_sample(fs_pv, 0.01*density*size**3))
-    print('fs_pv neurons added', len(neurons), 'total')
+    # print('fs_pv neurons added', len(neurons), 'total')
 
     for n in neurons:
         x, y, z = [ random() * size - size for _ in range(3) ]
         for nn in n: nn.translate(x, y, z)
-    print(len(neurons), 'neurons translated')
+    # print(len(neurons), 'neurons translated')
 
     # rotate and translate randomly
     for n in neurons:
@@ -69,64 +70,31 @@ def run_benchmark(size, density, radius, algorithm):
         theta = random()*2*pi
         transform = rotation_matrix(axis, theta)
         for nn in n: nn.transform(transform)
-    print(len(neurons), 'neurons rotated')
+    # print(len(neurons), 'neurons rotated')
 
     for n in neurons:
         for nn in n: nn.name = uuid4()
-    print(len(neurons), 'neurons renamed')
+    # print(len(neurons), 'neurons renamed')
 
-    print('points', 'consctruction', 'query_pairs', 'filtering', 'total', 'pairs', sep=', ')
     for i in range(10):
+        print(algorithm.__name__, size, density, radius, sep=', ', end=', ')
         tbefore = time()
-        pairs = algorithm(neurons, radius) # logs points, constructions, query_pairs, filtering
-        print(time()-tbefore, len(pairs), sep=', ')
+        ramsamples = memory_usage((algorithm, (neurons, radius))) # logs points, constructions, query_pairs, filtering
+        print(time()-tbefore, min(ramsamples), max(ramsamples), sep=', ')
 
 if __name__ == '__main__':
-    # works ok
-    # run_benchmark(1, 100, 1, find_neighbors)
-    # run_benchmark(1, 200, 1, find_neighbors)
-    # run_benchmark(1, 400, 1, find_neighbors)
-    # run_benchmark(1, 800, 1, find_neighbors)
-
-    # memory error
-    # run_benchmark(1, 1600, 1, find_neighbors_all_balls)
-    # run_benchmark(1, 3200, 1, find_neighbors)
-
-    # works ok
-    # run_benchmark(1, 100, 1, find_neighbors)
-    # run_benchmark(2, 100, 1, find_neighbors)
-
-    # memory error
-    # run_benchmark(4, 100, 1, find_neighbors)
-    # run_benchmark(8, 100, 1, find_neighbors)
-    # run_benchmark(16, 100, 1, find_neighbors)
-    # run_benchmark(32, 100, 1, find_neighbors)
-
+    print('algorithm'. 'size', 'density', 'radius', 'points', 'consctruction time', 'size', 'query_pairs', 'filtering', 'total', 'min memory', 'max memory', sep=', ')
     for seeed in range(3):
         for alg in [find_neighbors, find_neighbors_all_balls]:
             seed(seeed)
-            print(seeed, alg.__name__, 'varying distance')
+            # print(seeed, alg.__name__, 'varying distance')
             for i in [n/10 for n in range(5, 55, 5)]:
                 run_benchmark(1, 250, i, alg)
 
-            print(seeed, alg.__name__, 'varying density')
+            # print(seeed, alg.__name__, 'varying density')
             for i in range(100, 1000, 100):
                 run_benchmark(1, i, 1, alg)
 
-            print(seeed, alg.__name__, 'varying sise')
+            # print(seeed, alg.__name__, 'varying sise')
             for i in range(5):
                 run_benchmark(i, 250, 1, alg)
-
-
-    # run_benchmark(1, 250, 1, find_neighbors)
-    # run_benchmark(1, 250, 2, find_neighbors)
-    # run_benchmark(1, 250, 3, find_neighbors)
-    # run_benchmark(1, 250, 4, find_neighbors)
-    # run_benchmark(1, 250, 5, find_neighbors)
-
-    # way too slow
-    # run_benchmark(1, 200, 5, find_neighbors_alternate)
-
-    # run_benchmark(1, 100, 1/2, find_neighbors)
-    # run_benchmark(1, 100, 1, find_neighbors_all_balls)
-    # run_benchmark(1, 100, 1, find_neighbors_balls)

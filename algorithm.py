@@ -17,7 +17,7 @@ def find_neighbors(neurons, radius=DEFAULT_RADIUS):
     print(sum([len(n) for n in neurons]), end=', ')
     tbefore = time()
     data, tree = create_big_cKDTree(neurons)
-    print(time()-tbefore, end=', ')
+    print(time()-tbefore, sys.getsizeof(data) + sys.getsizeof(tree), end=', ', sep=', ')
 
     tbefore = time()
     res = tree.query_pairs(radius)
@@ -53,7 +53,7 @@ def find_neighbors_all_balls(neurons, radius=DEFAULT_RADIUS):
     print(sum([len(n) for n in neurons]), end=', ')
     tbefore = time()
     data, tree = create_big_cKDTree(neurons)
-    print(time()-tbefore, end=', ')
+    print(time()-tbefore, sys.getsizeof(data) + sys.getsizeof(tree), end=', ', sep=', ')
 
     tbefore = time()
     res = tree.query_ball_tree(tree, radius)
