@@ -3,9 +3,9 @@ from itertools import chain
 import numpy as np
 
 class Neurite(object):
-    __slots__ = ('id', 'type', 'x', 'y', 'z', 'r', 'parent', 'children', 'filename')
+    __slots__ = ('id', 'type', 'x', 'y', 'z', 'r', 'parent', 'children', 'name')
 
-    def __init__(self, id, type, x, y, z, r, parent, children, filename):
+    def __init__(self, id, type, x, y, z, r, parent, children, name):
         self.id = id
         self.type = type
         self.x = x
@@ -14,7 +14,7 @@ class Neurite(object):
         self.r = r
         self.parent = parent
         self.children = children
-        self.filename = filename
+        self.name = name
 
     @property
     def coords(self):
@@ -38,7 +38,7 @@ class Neurite(object):
         # A custom __repr__ so that we dont get infinete recursion because of both parent and children
         slots = {k: self.__getattribute__(k) for k in self.__slots__}
         slots['type'] = self.type_s
-        return 'Neurite(id={id}, type={type}, x={x}, y={y}, z={z}, filename={filename})'.format(**slots)
+        return 'Neurite(id={id}, type={type}, x={x}, y={y}, z={z}, name={name})'.format(**slots)
 
     def __len__(self):
         return len(self.coords)
@@ -85,7 +85,7 @@ def parse(filename):
                 r=float(line[5]),
                 parent=items.get(int(line[6]), None),
                 children=[],
-                filename=filename
+                name=filename
             )
 
             if n.parent:

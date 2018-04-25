@@ -1,9 +1,10 @@
 from time import time
 import numpy as np
+from uuid import uuid4
 from math import pi, cos, sin, sqrt
 from random import seed, random, sample, choice
 from parser import parse_files
-from algorithm import find_neighbors, find_neighbors_balls, find_neighbors_all_balls
+from algorithm import find_neighbors, find_neighbors_all_balls
 
 msn_d1 = [list(n.neurites()) for n in parse_files(['neurons/msn_d1-20170919-reg5'])]
 print(len(msn_d1), 'files parsed from msn_d1')
@@ -43,7 +44,6 @@ def rotation_matrix(axis, theta):
 # density is # neurons in cube with side size
 # radius is max distance between neighbors in microns
 def run_benchmark(size, density, radius, algorithm):
-    seed('Just to keep things consistent')
     neurons = []
 
     # 47% of neurons in size
@@ -71,11 +71,15 @@ def run_benchmark(size, density, radius, algorithm):
         for nn in n: nn.transform(transform)
     print(len(neurons), 'neurons rotated')
 
-    tbefore = time()
-    pairs = algorithm(neurons, radius)
-    tafter = time()
+    for n in neurons:
+        for nn in n: nn.name = uuid4()
+    print(len(neurons), 'neurons renamed')
 
-    print(len(pairs), 'pairs found in', tafter - tbefore, ' seconds.')
+    print('points', 'consctruction', 'query_pairs', 'filtering', 'total', 'pairs', sep=', ')
+    for i in range(10):
+        tbefore = time()
+        pairs = algorithm(neurons, radius) # logs points, constructions, query_pairs, filtering
+        print(time()-tbefore, len(pairs), sep=', ')
 
 if __name__ == '__main__':
     # works ok
@@ -98,12 +102,27 @@ if __name__ == '__main__':
     # run_benchmark(16, 100, 1, find_neighbors)
     # run_benchmark(32, 100, 1, find_neighbors)
 
-    run_benchmark(1, 250, .5, find_neighbors)
-    run_benchmark(1, 250, 1, find_neighbors)
-    run_benchmark(1, 250, 2, find_neighbors)
-    run_benchmark(1, 250, 3, find_neighbors)
-    run_benchmark(1, 250, 4, find_neighbors)
-    run_benchmark(1, 250, 5, find_neighbors)
+    for seeed in range(3):
+        for alg in [find_neighbors, find_neighbors_all_balls]:
+            seed(seeed)
+            print(seeed, alg.__name__, 'varying distance')
+            for i in [n/10 for n in range(5, 55, 5)]:
+                run_benchmark(1, 250, i, alg)
+
+            print(seeed, alg.__name__, 'varying density')
+            for i in range(100, 1000, 100):
+                run_benchmark(1, i, 1, alg)
+
+            print(seeed, alg.__name__, 'varying sise')
+            for i in range(5):
+                run_benchmark(i, 250, 1, alg)
+
+
+    # run_benchmark(1, 250, 1, find_neighbors)
+    # run_benchmark(1, 250, 2, find_neighbors)
+    # run_benchmark(1, 250, 3, find_neighbors)
+    # run_benchmark(1, 250, 4, find_neighbors)
+    # run_benchmark(1, 250, 5, find_neighbors)
 
     # way too slow
     # run_benchmark(1, 200, 5, find_neighbors_alternate)

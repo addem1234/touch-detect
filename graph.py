@@ -60,7 +60,7 @@ def neuron2trace(neuron):
     return lines, markers
 
 if __name__ == '__main__':
-    neurons = parse_files(sys.argv[1:])[:10]
+    neurons = parse_files(sys.argv[1:])[:3]
     size = 100 * len(neurons)
     for n in neurons:
         x, y, z = [ random() * size - size for _ in range(3) ]
@@ -86,19 +86,7 @@ if __name__ == '__main__':
                 zaxis=ZAxis(axis),
             ),
         margin=Margin(t=100),
-        hovermode='closest',
-        annotations=Annotations([
-                Annotation(
-                    showarrow=False,
-                    xref='paper',
-                    yref='paper',
-                    x=0,
-                    y=0.1,
-                    xanchor='left',
-                    yanchor='bottom',
-                    font=Font(size=14)
-                )
-            ]),
+        hovermode='closest'
     )
 
     fig=Figure(data=Data(traces), layout=layout)
