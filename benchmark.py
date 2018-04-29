@@ -83,10 +83,16 @@ def run_benchmark(size, density, radius, algorithm):
         print(time()-tbefore, min(ramsamples), max(ramsamples), sep=', ')
 
 if __name__ == '__main__':
-    print('algorithm'. 'size', 'density', 'radius', 'points', 'consctruction time', 'size', 'query_pairs', 'filtering', 'total', 'min memory', 'max memory', sep=', ')
+    print('algorithm', 'size', 'density', 'radius', 'points', 'consctruction time', 'size', 'query_pairs', 'filtering', 'total', 'min memory', 'max memory', sep=', ')
     for seeed in range(3):
         for alg in [find_neighbors, find_neighbors_all_balls]:
+
             seed(seeed)
+
+            # print(seeed, alg.__name__, 'varying sise')
+            for i in [ n/10 for n in range(2, 21, 2) ]:
+                run_benchmark(i, 250, 1, alg)
+
             # print(seeed, alg.__name__, 'varying distance')
             for i in [n/10 for n in range(5, 55, 5)]:
                 run_benchmark(1, 250, i, alg)
@@ -94,7 +100,3 @@ if __name__ == '__main__':
             # print(seeed, alg.__name__, 'varying density')
             for i in range(100, 1000, 100):
                 run_benchmark(1, i, 1, alg)
-
-            # print(seeed, alg.__name__, 'varying sise')
-            for i in range(5):
-                run_benchmark(i, 250, 1, alg)
