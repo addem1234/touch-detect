@@ -1,7 +1,7 @@
 import sys
 from time import time
 from itertools import chain
-from parser import parse_files
+from parse_neurons import parse_files
 
 from scipy.spatial import cKDTree
 
