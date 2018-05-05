@@ -5,7 +5,7 @@ from math import pi, cos, sin, sqrt
 from random import seed, random, sample, choice
 from memory_profiler import memory_usage
 from parse_neurons import parse_files
-from algorithm import find_neighbors, find_neighbors_all_balls
+from algorithm import find_neighbors
 
 msn_d1 = [list(n.neurites()) for n in parse_files(['neurons/msn_d1-20170919-reg5'])]
 #print(len(msn_d1), 'files parsed from msn_d1')
@@ -44,7 +44,7 @@ def rotation_matrix(axis, theta):
 # size is length of side of cube in mm
 # density is # neurons in cube with side size
 # radius is max distance between neighbors in microns
-def run_benchmark(size, density, radius, algorithm):
+def run_benchmark(size, density, radius, algorithm, type, seed):
     neurons = []
 
     # 47% of neurons in size
@@ -77,26 +77,24 @@ def run_benchmark(size, density, radius, algorithm):
     # print(len(neurons), 'neurons renamed')
 
     for i in range(10):
-        print(algorithm.__name__, size, density, radius, sep=', ', end=', ')
+        print(algorithm.__name__, size, density, radius, sep=',', end=',')
         tbefore = time()
-        ramsamples = memory_usage((algorithm, (neurons, radius))) # logs points, constructions, query_pairs, filtering
-        print(time()-tbefore, min(ramsamples), max(ramsamples), sep=', ')
+        ramsamples = memory_usage((algorithm, (neurons, radius)))
+        print(time()-tbefore, min(ramsamples), max(ramsamples), type, seed, sep=',')
 
 if __name__ == '__main__':
-    print('algorithm', 'size', 'density', 'radius', 'points', 'consctruction time', 'size', 'query_pairs', 'filtering', 'total', 'min memory', 'max memory', sep=', ')
+    print('algorithm,volume,density,radius,points,consctruction_time,data_size,query_pairs_time,filtering_time,total_time,min_memory,max_memory,type,seed')
     for seeed in range(3):
-        for alg in [find_neighbors, find_neighbors_all_balls]:
+        seed(seeed)
 
-            seed(seeed)
+        # print(seeed, alg.__name__, 'varying volume')
+        for i in [n/10 for n in range(5, 29, 2)]:
+            run_benchmark(i, 100, 1, alg, 'volume', seeed)
 
-            # print(seeed, alg.__name__, 'varying sise')
-            for i in [n/10 for n in range(5, 29, 2)]:
-                run_benchmark(i, 100, 1, alg)
+        # print(seeed, alg.__name__, 'varying density')
+        for i in range(100, 1000, 100):
+            run_benchmark(1, i, 1, alg, 'density', seeed)
 
-            # print(seeed, alg.__name__, 'varying distance')
-            for i in [n/10 for n in range(5, 55, 5)]:
-                run_benchmark(1, 100, i, alg)
-
-            # print(seeed, alg.__name__, 'varying density')
-            for i in range(100, 1000, 100):
-                run_benchmark(1, i, 1, alg)
+        # print(seeed, alg.__name__, 'varying radius')
+        for i in [n/10 for n in range(5, 55, 5)]:
+            run_benchmark(1, 250, i, alg, 'radius', seeed)
